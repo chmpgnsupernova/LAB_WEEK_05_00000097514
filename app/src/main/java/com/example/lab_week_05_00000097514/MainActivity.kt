@@ -6,14 +6,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lab_week_05_00000097514.api.CatApiService
 import retrofit2.*
-import retrofit2.converter.scalars.ScalarsConverterFactory
-
+import com.example.lab_week_05_00000097514.model.ImageData
+import retrofit2.converter.moshi.MoshiConverterFactory
 class MainActivity : AppCompatActivity() {
 
-    private val retrofit by lazy {
+    private val retrofit by lazy{
         Retrofit.Builder()
             .baseUrl("https://api.thecatapi.com/v1/")
-            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create())
             .build()
     }
 
@@ -34,23 +34,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun getCatImageResponse() {
         val call = catApiService.searchImages(1, "full")
-        call.enqueue(object : Callback<String> {
-            override fun onFailure(call: Call<String>, t: Throwable) {
+        call.enqueue(object: Callback<List<ImageData>> {
+            override fun onFailure(call: Call<List<ImageData>>, t: Throwable) {
                 Log.e(MAIN_ACTIVITY, "Failed to get response", t)
             }
 
-            override fun onResponse(call: Call<String>, response: Response<String>) {
-                if (response.isSuccessful) {
-                    apiResponseView.text = response.body()
-                } else {
-                    Log.e(
-                        MAIN_ACTIVITY, "Failed to get response\n" +
-                                response.errorBody()?.string().orEmpty()
+            override fun onResponse(call: Call<List<ImageData>>,
+                                    response: Response<List<ImageData>>) {
+                if(response.isSuccessful){
+                    val image = response.body()
+                    val firstImage = image?.firstOrNull()?.imageUrl ?: "No URL"
+                    apiResponseView.text = getString(R.string.image_placeholder,
+                        firstImage)
+                }
+                else{
+                    Log.e(MAIN_ACTIVITY, "Failed to get response\n" +
+                            response.errorBody()?.string().orEmpty()
                     )
                 }
             }
         })
     }
+
 
     companion object {
         const val MAIN_ACTIVITY = "MAIN_ACTIVITY"
